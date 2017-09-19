@@ -29,6 +29,7 @@ from __future__ import print_function
 import argparse
 import sys
 import tempfile
+import math
 
 from tensorflow.examples.tutorials.mnist import input_data
 
@@ -121,8 +122,6 @@ def bias_variable(shape):
   """bias_variable generates a bias variable of a given shape."""
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
-
-#def Lsoftmax_loss()
 
 def main():
   # Import data
