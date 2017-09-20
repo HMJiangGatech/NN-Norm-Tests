@@ -35,6 +35,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
 
+import LSoftmax as LSoft
+
 FLAGS = None
 
 
@@ -92,12 +94,19 @@ def deepnn(x):
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-  # Map the 1024 features to 10 classes, one for each digit
-  with tf.name_scope('fc2'):
-    W_fc2 = weight_variable([1024, 10])
-    b_fc2 = bias_variable([10])
+  # # Map the 1024 features to 10 classes, one for each digit
+  # with tf.name_scope('fc2'):
+  #   W_fc2 = weight_variable([1024, 10])
+  #   b_fc2 = bias_variable([10])
+  #
+  #   y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
-    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+  # Map the 1024 features to 10 classes, one for each digit
+  with tf.name_scope('lsoft'):
+    W_ls = weight_variable([1024, 10])
+    b_ls = bias_variable([10])
+    y_conv = LSoft.Lsoftmax_loss(h_fc1_drop, W_ls, b_ls,3)
+
   return y_conv, keep_prob
 
 
@@ -137,9 +146,10 @@ def main():
   y_conv, keep_prob = deepnn(x)
 
   with tf.name_scope('loss'):
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
-                                                            logits=y_conv)
-  cross_entropy = tf.reduce_mean(cross_entropy)
+    cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv),reduction_indices=1)
+    cross_entropy = tf.reduce_mean(cross_entropy)
+    # cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
+    #                                                         logits=y_conv)
 
   with tf.name_scope('adam_optimizer'):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
