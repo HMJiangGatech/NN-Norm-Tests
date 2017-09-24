@@ -51,10 +51,9 @@ def deepnn(x):
     number of pixels in a standard MNIST image.
 
   Returns:
-    A tuple (y, keep_prob). y is a tensor of shape (N_examples, 10), with values
+    A tuple (y). y is a tensor of shape (N_examples, 10), with values
     equal to the logits of classifying the digit into one of 10 classes (the
-    digits 0-9). keep_prob is a scalar placeholder for the probability of
-    dropout.
+    digits 0-9).
   """
   # Reshape to use within a convolutional neural net.
   # Last dimension is for "features" - there is only one here, since images are
@@ -91,12 +90,6 @@ def deepnn(x):
     h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
-  # Dropout - controls the complexity of the model, prevents co-adaptation of
-  # features.
-  with tf.name_scope('dropout'):
-    keep_prob = tf.placeholder(tf.float32)
-    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-
   # # Map the 1024 features to 10 classes, one for each digit
   # with tf.name_scope('fc2'):
   #   W_fc2 = weight_variable([1024, 10])
@@ -108,9 +101,9 @@ def deepnn(x):
   with tf.name_scope('lsoft'):
     W_ls = weight_variable([1024, 10])
     b_ls = bias_variable([10])
-    y_conv = LSoft.Lsoftmax_loss(h_fc1, W_ls, b_ls,1)
+    y_conv = LSoft.Lsoftmax_loss(h_fc1, W_ls, b_ls,3)
 
-  return y_conv, keep_prob
+  return y_conv
 
 
 def conv2d(x, W):
@@ -146,7 +139,7 @@ def main():
   y_ = tf.placeholder(tf.float32, [None, 10])
 
   # Build the graph for the deep net
-  y_conv, keep_prob = deepnn(x)
+  y_conv = deepnn(x)
 
   with tf.name_scope('loss'):
     # cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv),reduction_indices=1)
@@ -178,15 +171,15 @@ def main():
       if i % 100 == 0:
         record_time = np.append(record_time,i)
         train_accuracy = np.append(train_accuracy,accuracy.eval(feed_dict={
-            x: batch[0], y_: batch[1], keep_prob: 1.0}))
+            x: batch[0], y_: batch[1]}))
         test_accuracy = np.append(test_accuracy,accuracy.eval(
-            feed_dict={x: mnist.test.images,y_: mnist.test.labels, keep_prob: 1.0}))
+            feed_dict={x: mnist.test.images,y_: mnist.test.labels}))
         print('step %d, training accuracy %g' % (i, train_accuracy[-1]))
         print('step %d, test accuracy %g' % (i, test_accuracy[-1]))
-      train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+      train_step.run(feed_dict={x: batch[0], y_: batch[1]})
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
-        x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+        x: mnist.test.images, y_: mnist.test.labels}))
     plt.plot(record_time, train_accuracy)
     plt.plot(record_time, test_accuracy)
     plt.show()

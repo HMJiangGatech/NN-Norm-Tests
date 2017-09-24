@@ -44,7 +44,7 @@ def Lsoftmax_loss(X, W, b, m, dtype = tf.float32):
   # 1. use acos
   # cos_mtheta = tf.cos(m*tf.acos(cos_theta))
 
-  # 2. use deployment 
+  # 2. use deployment
   sin2_theta = 1 - cos_theta**2
   cos_mtheta = tf.zeros_like(cos_theta)
   for i in range(0,m+1,2):
@@ -55,8 +55,7 @@ def Lsoftmax_loss(X, W, b, m, dtype = tf.float32):
 
 
   l_score = ( tf.multiply(tf.pow(-1.,k), cos_mtheta) - 2*k) * val_prod
-  l_softmax = tf.nn.softmax(l_score)
-  return l_softmax
+  return l_score
 
 if __name__ == '__main__':
   testSess = tf.Session()
