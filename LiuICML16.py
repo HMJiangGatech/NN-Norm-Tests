@@ -32,10 +32,13 @@ import tempfile
 import math
 
 from tensorflow.examples.tutorials.mnist import input_data
-
 import tensorflow as tf
-
 import LSoftmax as LSoft
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+import numpy as np
 
 FLAGS = None
 
@@ -99,13 +102,13 @@ def deepnn(x):
   #   W_fc2 = weight_variable([1024, 10])
   #   b_fc2 = bias_variable([10])
   #
-  #   y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+  #   y_conv = tf.matmul(h_fc1, W_fc2) + b_fc2
 
   # Map the 1024 features to 10 classes, one for each digit
   with tf.name_scope('lsoft'):
     W_ls = weight_variable([1024, 10])
     b_ls = bias_variable([10])
-    y_conv = LSoft.Lsoftmax_loss(h_fc1_drop, W_ls, b_ls,3)
+    y_conv = LSoft.Lsoftmax_loss(h_fc1, W_ls, b_ls,1)
 
   return y_conv, keep_prob
 
@@ -146,10 +149,10 @@ def main():
   y_conv, keep_prob = deepnn(x)
 
   with tf.name_scope('loss'):
-    cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv),reduction_indices=1)
-    cross_entropy = tf.reduce_mean(cross_entropy)
-    # cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
-    #                                                         logits=y_conv)
+    # cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv),reduction_indices=1)
+    # cross_entropy = tf.reduce_mean(cross_entropy)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_,
+                                                            logits=y_conv)
 
   with tf.name_scope('adam_optimizer'):
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
@@ -164,18 +167,29 @@ def main():
   train_writer = tf.summary.FileWriter(graph_location)
   train_writer.add_graph(tf.get_default_graph())
 
+  # Run!
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20000):
+    train_accuracy = np.array(())
+    test_accuracy = np.array(())
+    record_time = np.array(())
+    for i in range(30000):
       batch = mnist.train.next_batch(50)
       if i % 100 == 0:
-        train_accuracy = accuracy.eval(feed_dict={
-            x: batch[0], y_: batch[1], keep_prob: 1.0})
-        print('step %d, training accuracy %g' % (i, train_accuracy))
+        record_time = np.append(record_time,i)
+        train_accuracy = np.append(train_accuracy,accuracy.eval(feed_dict={
+            x: batch[0], y_: batch[1], keep_prob: 1.0}))
+        test_accuracy = np.append(test_accuracy,accuracy.eval(
+            feed_dict={x: mnist.test.images,y_: mnist.test.labels, keep_prob: 1.0}))
+        print('step %d, training accuracy %g' % (i, train_accuracy[-1]))
+        print('step %d, test accuracy %g' % (i, test_accuracy[-1]))
       train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
 
     print('test accuracy %g' % accuracy.eval(feed_dict={
         x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+    plt.plot(record_time, train_accuracy)
+    plt.plot(record_time, test_accuracy)
+    plt.show()
 
 if __name__ == '__main__':
   main()
